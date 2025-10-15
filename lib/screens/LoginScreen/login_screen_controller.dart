@@ -44,7 +44,8 @@ class LoginScreenController extends GetxController {
        }
       }
     } catch (e) {
-      Get.snackbar("Login Error", e.toString());
+      Get.snackbar("Login Error",""
+          "Login Failed please check password and email again");
     } finally {
       isLoading.value = false;
     }

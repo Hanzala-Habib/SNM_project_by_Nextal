@@ -16,7 +16,7 @@ class EmployeeManagementScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF0E2A4D),
         title: Text(
           "Employees",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),

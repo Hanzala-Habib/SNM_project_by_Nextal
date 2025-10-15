@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../Subscribe Servcice/order_confirm_screen.dart';
+import '../orderConfirmScreen/order_confirm_screen.dart';
+
 
 class ServiceDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> serviceData;
@@ -20,7 +21,7 @@ class ServiceDetailsScreen extends StatelessWidget {
           color: Colors.white,
           fontWeight: FontWeight.bold
         ),),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor:Color(0xFF0E2A4D),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -53,7 +54,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      "Price: ${serviceData['price']} PKR",
+                      "RS: ${serviceData['price'].toInt()} PKR",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,

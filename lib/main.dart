@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'package:crmproject/screens/AdminScreen/admin_screen.dart';
-import 'package:crmproject/screens/ClientScreen/client_screen.dart';
 import 'package:crmproject/screens/EmployeeScreen/employee_screen.dart';
+import 'package:crmproject/screens/FullClientManagement/full_client_management_screen.dart';
 import 'package:crmproject/screens/LoginScreen/login_screen.dart';
 import 'package:crmproject/screens/SignUpScreen/sign_up_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -110,7 +110,7 @@ class _MyAppState extends State<MyApp> {
 
             if (role == "Admin") return const AdminScreen();
             if (role == "Employee") return EmployeeServicesScreen();
-            if (role == "Client") return ClientScreen();
+            if (role == "Client") return FullClientManagementScreen();
 
             return LoginScreen();
           },
@@ -139,7 +139,7 @@ class _MyAppState extends State<MyApp> {
       getPages: [
         GetPage(name: "/signup", page: () => const SignUpScreen()),
         GetPage(name: "/login", page: () => LoginScreen()),
-        GetPage(name: "/ClientScreen", page: () =>ClientScreen()),
+        GetPage(name: "/ClientScreen", page: () =>FullClientManagementScreen()),
         GetPage(name: "/adminScreen", page: () => const AdminScreen()),
         GetPage(name: "/EmployeeScreen", page: () =>  EmployeeServicesScreen()),
       ],

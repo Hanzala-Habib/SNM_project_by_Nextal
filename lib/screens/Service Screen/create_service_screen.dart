@@ -19,7 +19,7 @@ class CreateServiceScreen extends StatelessWidget {
           "Create Service",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF0E2A4D),
       ),
       body: SingleChildScrollView(
         child: Padding(

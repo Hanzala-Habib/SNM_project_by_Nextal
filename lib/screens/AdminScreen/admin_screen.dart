@@ -3,6 +3,7 @@ import 'package:crmproject/screens/AdminServiceManagementScreen/admin_service_ma
 import 'package:crmproject/screens/CreatePackagesScreen/create_packages_screen.dart';
 import 'package:crmproject/screens/EmployeeManagement/employee_management_screen.dart';
 import 'package:crmproject/screens/LoginScreen/login_screen.dart';
+import 'package:crmproject/screens/UserServiceRequestManagement/user_service_request_screen.dart';
 import 'package:crmproject/utils/widgets/admin_services_card.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -24,7 +25,7 @@ class AdminScreen extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text("Admin Panel", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF0E2A4D),
         actions: [
           IconButton(
               onPressed: () async {
@@ -37,10 +38,14 @@ class AdminScreen extends StatelessWidget {
       ),
       body:SingleChildScrollView(
           child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 spacing: 10,
                 children: [
+                  AdminServicesCard(onPressed: (){
+                    Get.to(()=>UserServiceRequestScreen());
+                  },
+                    cardtext: "Manage Requests",),
                   AdminServicesCard(onPressed: (){
                     Get.to(()=>AdminServiceManagementScreen());
                   },

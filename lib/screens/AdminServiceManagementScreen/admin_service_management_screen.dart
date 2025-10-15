@@ -74,59 +74,66 @@ class AdminServiceManagementScreen extends StatelessWidget {
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  name,
-                                  softWrap: true,
-                                  style: const TextStyle(
-                                    fontSize: 12.0,
-                                    fontWeight: FontWeight.bold,
+                        child: Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width:100,
+                                    child: Text(
+                                      name,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      softWrap: true,
+
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  ' Rs. ${service['price'].toString()}',
-                                  style: const TextStyle(
-                                    fontSize: 12.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.pink,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              width: 30,
-                              child: PopupMenuButton<String>(
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.black,
-                                ),
-                                onSelected: (value) async {
-                                  if (value == 'Delete') {
-                                    serviceController.deleteService(
-                                      service.id,
-                                    );
-                                  } else if (value == 'Edit') {
-                                    Get.to(() => CreateServiceScreen());
-                                  }
-                                },
-                                itemBuilder: (BuildContext context) => [
-                                  PopupMenuItem(
-                                    value: 'Delete',
-                                    child: Text("Delete"),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'Edit',
-                                    child: Text("Edit"),
+                                  Text(
+                                    ' Rs. ${service['price'].toInt()}',
+                                    style: const TextStyle(
+                                      fontSize: 12.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.pink,
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
+                              SizedBox(
+                                width: 30,
+                                child: PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_vert,
+                                    color: Colors.black,
+                                  ),
+                                  onSelected: (value) async {
+                                    if (value == 'Delete') {
+                                      serviceController.deleteService(
+                                        service.id,
+                                      );
+                                    } else if (value == 'Edit') {
+                                      Get.to(() => CreateServiceScreen());
+                                    }
+                                  },
+                                  itemBuilder: (BuildContext context) => [
+                                    PopupMenuItem(
+                                      value: 'Delete',
+                                      child: Text("Delete"),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'Edit',
+                                      child: Text("Edit"),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

@@ -1,5 +1,5 @@
 import 'package:crmproject/screens/AdminScreen/admin_screen_controller.dart';
-import 'package:crmproject/screens/ClientScreen/client_screen.dart';
+
 import 'package:crmproject/screens/ClientScreen/client_screen_controller.dart';
 import 'package:crmproject/screens/LoginScreen/login_screen.dart';
 import 'package:crmproject/utils/widgets/save_button.dart';
@@ -54,7 +54,7 @@ class ClientProfileScreen extends StatelessWidget {
             SaveButton(
               onPressed: () async {
                 await clientProfileController.saveClientDetails(dbname);
-                Get.offAll(() =>  ClientScreen(title: 'Client Products',));
+                // Get.offAll(() =>  ClientScreen(title: 'Client Products',));
               },
             ),
           ],

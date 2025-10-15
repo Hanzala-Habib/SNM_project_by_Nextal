@@ -1,11 +1,14 @@
-import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 
-class EmployeeServiceController extends GetxController {
-  final  _db = FirebaseFirestore.instance;
+class UserServiceRequestController extends GetxController {
+  final _db = FirebaseFirestore.instance;
   final userId = FirebaseAuth.instance.currentUser!.uid;
+
+  RxList<Map<String, dynamic>> allRequests = <Map<String, dynamic>>[].obs;
   RxList<Map<String, dynamic>> requests = <Map<String, dynamic>>[].obs;
+  RxString selectedStatus = "All".obs;
 
   @override
   void onInit() {
@@ -13,13 +16,10 @@ class EmployeeServiceController extends GetxController {
     fetchServices();
   }
 
-
-
-
   void fetchServices() {
     _db
         .collection("requests")
-        .where("status", whereIn: ["pending", "Approved","started"])
+        .where("status", whereIn: ["pending", "Approved",])
         .snapshots()
         .listen((snapshot) async {
       if (snapshot.docs.isEmpty) {
@@ -27,7 +27,6 @@ class EmployeeServiceController extends GetxController {
         return;
       }
 
-      // Fetch all related services concurrently
       final futures = snapshot.docs.map((doc) async {
         var data = doc.data();
         data["id"] = doc.id;
@@ -45,38 +44,23 @@ class EmployeeServiceController extends GetxController {
       }).toList();
 
       final results = await Future.wait(futures);
-
-      final filtered = results.where((data) =>
-          data["status"] == "started"||
-          data["status"] == "Approved"
-      ).toList();
-
-      requests.value = filtered; // realtime reactive update
+      allRequests.value = results;
+      applyFilter();
     });
   }
 
-
-
-
-  Future<void> claimService(String serviceId) async {
-    await _db.collection("requests").doc(serviceId).update({
-      "status": "claimed",
-      "claimedBy": userId,
-      "technicianId":userId
-    });
+  void applyFilter() {
+    if (selectedStatus.value == "All") {
+      requests.value = allRequests;
+    } else {
+      requests.value = allRequests
+          .where((data) => data["status"] == selectedStatus.value)
+          .toList();
+    }
   }
 
-  Future<void> startService(String serviceId) async {
-    await _db.collection("requests").doc(serviceId).update({
-      "status": "started",
-      "startTime": FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> endService(String serviceId) async {
-    await _db.collection("requests").doc(serviceId).update({
-      "status": "completed",
-      "endTime": FieldValue.serverTimestamp(),
-    });
+  void setFilter(String status) {
+    selectedStatus.value = status;
+    applyFilter();
   }
 }

@@ -134,6 +134,7 @@ class SubscriptionController extends GetxController {
   Future<void> createRequest({
     required String serviceId,
     required String userId,
+    String? paymentReceiptUrl,
     DateTime? scheduledDate,
     required String mobileNumber,
   }) async {
@@ -152,6 +153,7 @@ class SubscriptionController extends GetxController {
       "reason": null,
       "rating": null,
       "location": selectedLocation,
+      "paymentReceiptUrl": paymentReceiptUrl,
     });
 
     await LocalNotificationService.scheduleNotification(

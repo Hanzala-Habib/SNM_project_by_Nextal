@@ -1,3 +1,4 @@
+
 import 'package:crmproject/screens/LoginScreen/login_screen_controller.dart';
 import 'package:crmproject/screens/SignUpScreen/sign_up_screen.dart';
 import 'package:crmproject/utils/widgets/custom_input_field.dart';
@@ -9,11 +10,13 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 
 import '../../data/services/fcm_service.dart';
+import '../AdminScreen/admin_screen_controller.dart';
 
 class LoginScreen extends StatelessWidget {
   final LoginScreenController loginScreenController = Get.put(
     LoginScreenController(),
   );
+  final adminResetPasswordController=Get.put(AdminController());
 
   LoginScreen({super.key});
 
@@ -48,6 +51,26 @@ class LoginScreen extends StatelessWidget {
                         child: Image.asset('assets/images/Untitled-3.png'),
                       ),
                     ],
+                  ),
+                  if(loginScreenController.emailController.text.isNotEmpty)
+                  Container(
+                    alignment: Alignment.centerRight,
+                    child: RichText(
+                      textAlign: TextAlign.end,
+                      text: TextSpan(
+                        text: "Forget Password",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                          color: Colors.blue,
+                        ),
+                     recognizer: TapGestureRecognizer()
+                     ..onTap = () {
+                          adminResetPasswordController.resetPassword(loginScreenController.emailController.text.trim());
+                       }
+
+                      ),
+                    ),
                   ),
                   CustomInputField(
                     label: "Email",

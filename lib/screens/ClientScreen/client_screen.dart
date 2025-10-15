@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crmproject/screens/AdminScreen/admin_screen_controller.dart';
-import 'package:crmproject/screens/ClientScreen/client_profile_screen.dart';
-import 'package:crmproject/screens/LoginScreen/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -14,13 +12,10 @@ import 'client_screen_controller.dart';
 class ClientScreen extends StatelessWidget {
   final String title;
   final AdminController controller = Get.put(AdminController());
-  final email = FirebaseAuth.instance.currentUser?.email;
-  final name = FirebaseAuth.instance.currentUser?.displayName;
   final subController = Get.put(SubscriptionController());
   final clientController = Get.put(ClientProfileController());
 
   ClientScreen({super.key, this.title = 'SNM Services'});
-
 
   @override
   Widget build(BuildContext context) {
@@ -41,54 +36,8 @@ class ClientScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            onSelected: (value) async {
-              if (value == 'logout') {
-                await FirebaseAuth.instance.signOut();
-                Get.offAll(() => LoginScreen());
-              } else if (value == 'reset') {
-                controller.resetPassword(email!);
-              } else if (value == 'address') {
-                Get.to(() => ClientProfileScreen(name: name!));
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: const [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text("Logout"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'reset',
-                child: Row(
-                  children: const [
-                    Icon(Icons.lock_reset, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Text("Reset Password"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'address',
-                child: Row(
-                  children: const [
-                    Icon(Icons.home, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text("Update Address"),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-        backgroundColor: Colors.deepPurple,
+
+        backgroundColor: Color(0xFF0E2A4D),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -108,8 +57,13 @@ class ClientScreen extends StatelessWidget {
             }
 
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
+                Text("Featured Services",style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20
+                ),),
 
                 CarouselSlider(
                   options: CarouselOptions(
@@ -140,12 +94,12 @@ class ClientScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Expanded(
-                                  child:  Container(
+                                  child: Container(
                                     height: 80,
-
                                     width: 300,
+
                                     decoration: BoxDecoration(
-                                      borderRadius: const BorderRadius.only(
+                                      borderRadius:  BorderRadius.only(
                                         topLeft: Radius.circular(12),
                                         topRight: Radius.circular(12),
                                       ),
@@ -161,33 +115,30 @@ class ClientScreen extends StatelessWidget {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-
-                                        service.title,
-
-                                        style: TextStyle(
-
-                                          fontSize: 14.0,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurple,
-                                        ),
-                                        softWrap: true,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 8.0),
+                                      Expanded(
                                         child: Text(
-                                          'Rs. ${service.price.toString()}',
-                                          style: TextStyle(
-                                            fontSize: 16.0,
+                                          service.title,
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
                                             fontWeight: FontWeight.bold,
-                                              color: Colors.pink
+                                            color: Colors.deepPurple,
                                           ),
                                           softWrap: true,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Rs. ${service.price.toInt()}',
+                                        style: const TextStyle(
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.pink,
                                         ),
                                       ),
                                     ],
-                                  ),
+                                  )
+
                                 ),
                               ],
                             ),
@@ -200,7 +151,10 @@ class ClientScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Grid Section
+                Text("All Services",style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20
+                ),),
                 Expanded(
                   child: GridView.builder(
                     gridDelegate:
@@ -257,7 +211,7 @@ class ClientScreen extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
-                                    ' Rs. ${service.price.toString()}',
+                                    ' Rs. ${service.price.toInt()}',
                                       style: const TextStyle(
                                         fontSize: 12.0,
                                         fontWeight: FontWeight.bold,
@@ -295,6 +249,7 @@ class ClientScreen extends StatelessWidget {
         // Normalize services -> try to convert ids to names if needed
         final servicesField = data['services'];
         final List<String> serviceNames = [];
+        final List<int> servicePrice=[];
 
         if (servicesField is List) {
           for (var item in servicesField) {
@@ -305,6 +260,7 @@ class ClientScreen extends StatelessWidget {
                 if (serviceDoc.exists) {
                   final sdata = serviceDoc.data() as Map<String, dynamic>;
                   serviceNames.add(sdata['title']?.toString() ?? item);
+                  servicePrice.add(sdata['price']?.toInt()?? item);
                 } else {
                   // if no doc, treat the string as a human-friendly name
                   serviceNames.add(item);
