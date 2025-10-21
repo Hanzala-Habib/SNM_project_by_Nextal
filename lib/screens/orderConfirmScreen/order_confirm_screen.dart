@@ -9,17 +9,12 @@ import 'package:get/get.dart';
 import 'order_confirm_controller.dart';
 
 
-class OrderScreen extends StatefulWidget {
+class OrderScreen extends StatelessWidget {
   var subscription;
   final Map<String, dynamic> serviceData;
 
  OrderScreen({super.key, required this.serviceData,this.subscription=false});
 
-  @override
-  State<OrderScreen> createState() => _OrderScreenState();
-}
-
-class _OrderScreenState extends State<OrderScreen> {
   final controller = Get.put(OrderController());
 
   final subscribeController = Get.put(SubscriptionController());
@@ -30,7 +25,7 @@ class _OrderScreenState extends State<OrderScreen> {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         title: Text(
-          "Order ${widget.serviceData['title']}",
+          "Order ${serviceData['title']}",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Color(0xFF0E2A4D),
@@ -100,19 +95,19 @@ class _OrderScreenState extends State<OrderScreen> {
                     onPressed: () async {
                       controller.isLoading.value = true;
                       try {
-                        print(widget.serviceData);
+                        print(serviceData);
 
 
-                        if(widget.subscription==true){
+                        if(subscription==true){
                           final userId = subscribeController.auth.currentUser!.uid;
                           final imageUrl = await controller.uploadImage(userId);
                           // final packageId =widget.serviceData['id'] as String? ?? '';
-                          final pkgName = widget.serviceData['name'] ?? 'Package';
+                          final pkgName = serviceData['name'] ?? 'Package';
 
                           await subscribeController.createSubscription(
                             userId: userId,
                             // packageId: packageId,
-                            serviceId:widget.serviceData['id'],
+                            serviceId:serviceData['id'],
                             // type: "package",
                             durationMonths:12,
                             mobileNumber: controller.mobileNumber.text.trim(),
@@ -130,7 +125,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
                           subscribeController.createRequest(
                             userId: userId,
-                            serviceId: widget.serviceData['id'],
+                            serviceId: serviceData['id'],
                             scheduledDate: controller.scheduledDate,
                             secondScheduledDate: controller.secondDate,
                             mobileNumber: controller.mobileNumber.text.trim(),
