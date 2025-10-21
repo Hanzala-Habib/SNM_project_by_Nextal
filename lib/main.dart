@@ -136,7 +136,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       home: _getInitialScreen(),
-      getPages: [
+      getPages:[
         GetPage(name: "/signup", page: () => const SignUpScreen()),
         GetPage(name: "/login", page: () => LoginScreen()),
         GetPage(name: "/ClientScreen", page: () =>FullClientManagementScreen()),

@@ -34,6 +34,10 @@ class CreateServiceScreen extends StatelessWidget {
                   label: 'Price',
                   keyboardType: TextInputType.number,
                   controller: serviceController.priceController),
+              CustomInputField(
+                  label: 'Annual Price',
+                  keyboardType: TextInputType.number,
+                  controller: serviceController.annualPriceController),
               DescriptionField(
                 hintText:
                 'Enter the service description which helps users to better understand...',

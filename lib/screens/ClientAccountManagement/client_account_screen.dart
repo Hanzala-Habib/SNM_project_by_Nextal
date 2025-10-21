@@ -103,121 +103,341 @@ class ClientAccountScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child:  requests.isEmpty
-                  ? const Center(child: Text("No requests available"))
-                  : StreamBuilder<QuerySnapshot>(
-                stream:FirebaseFirestore.instance.collection('requests').snapshots(),
-                builder: (context, asyncSnapshot) {
-                  return ListView.builder(
-                    itemCount:requests.length,
-                    itemBuilder: (context, index) {
-                      final service =clientController.requests[index];
-                      final status = service['status'];
-                      final date = (service['scheduledDate'] as Timestamp).toDate();
-                      return Card(
-                        margin: const EdgeInsets.all(10),
-                        child: ListTile(
-                          title: Text(
-                            "Service: ${service['title']}",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            spacing: 4,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Status: $status",
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              Text(
-                                "Date: ${date.toString().split(' ')[0]}",
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              if(status=='Approved')
-                                Text("Service is in progress",style: TextStyle(color: Colors.green),),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
+              child: DefaultTabController(
+                length: 2,
+                child: Column(
+                  children: [
+                    const TabBar(
+                      labelColor: Color(0xFF0E2A4D),
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor:  Color(0xFF0E2A4D),
+                      tabs: [
+                        Tab(text: "Services"),
+                        Tab(text: "Subscriptions"),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          // -------- SERVICES TAB --------
+                          Obx(() {
+                            final allRequests = clientController.requests;
+                            final filter = clientController.selectedStatus.value;
 
-                                  if(status=='pending')
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        final newDate = await showDatePicker(
-                                          context: context,
-                                          initialDate: date,
-                                          firstDate: DateTime.now(),
-                                          lastDate: DateTime.now().add(
-                                            const Duration(days: 30),
-                                          ),
-                                        );
-                                        if (newDate != null) {
-                                          clientController.updateServiceDate(
-                                            service['id'],
-                                            newDate,
-                                          );
-                                        }
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
+                            final filteredRequests = filter == "All"
+                                ? allRequests
+                                : allRequests
+                                .where((r) => r['status'] == filter)
+                                .toList();
 
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                            if (filteredRequests.isEmpty) {
+                              return const Center(child: Text("No services found"));
+                            }
+
+                            return ListView.builder(
+                              itemCount:requests.length,
+                              itemBuilder: (context, index) {
+                                final service =clientController.requests[index];
+                                final status = service['status'];
+                                final date = (service['scheduledDate'] as Timestamp).toDate();
+                                return Card(
+                                  margin: const EdgeInsets.all(10),
+                                  child: ListTile(
+                                    title: Text(
+                                      "Service: ${service['title']}",
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Column(
+                                      spacing: 4,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Status: $status",
+                                          style: TextStyle(fontWeight: FontWeight.w600),
                                         ),
-                                      ),
-                                      child: Row(
-                                        spacing: 4,
-                                        children: [
-                                          Text(
-                                            "Edit Date",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
+                                        Text(
+                                          "Date: ${date.toString().split(' ')[0]}",
+                                          style: TextStyle(fontWeight: FontWeight.w600),
+                                        ),
+                                        if(status=='Approved')
+                                          Text("Service is in progress",style: TextStyle(color: Colors.green),),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+
+                                            if(status=='pending')
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  final newDate = await showDatePicker(
+                                                    context: context,
+                                                    initialDate: date,
+                                                    firstDate: DateTime.now(),
+                                                    lastDate: DateTime.now().add(
+                                                      const Duration(days: 30),
+                                                    ),
+                                                  );
+                                                  if (newDate != null) {
+                                                    clientController.updateServiceDate(
+                                                      service['id'],
+                                                      newDate,
+                                                    );
+                                                  }
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.white,
+
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  spacing: 4,
+                                                  children: [
+                                                    Text(
+                                                      "Edit Date",
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    Icon(Icons.edit, color: Colors.blue),
+                                                  ],
+                                                ),
+                                              ),
+                                            if(status=='pending')
+                                              ElevatedButton(
+                                                onPressed: () =>
+                                                    clientController.showCancelDialog(service['id'],"requests"),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  spacing: 6,
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: const [
+                                                    Text(
+                                                      "Cancel Service",
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                    Icon(Icons.cancel, color: Colors.red),
+                                                  ],
+                                                ),
+                                              ),
+                                            if(status=='claimed'|| status=='started' )
+                                              Text("Service is in progress",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
+                                            if(status=='completed')
+                                              Text("Service is Completed",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
+
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }),
+
+                          // -------- SUBSCRIPTIONS TAB --------
+                          Obx(() {
+                            final allSubs = clientController.subscriptions;
+                            final filter = clientController.selectedStatus.value;
+
+                            final filteredSubs = filter == "All"
+                                ? allSubs
+                                : allSubs.where((s) => s['status'] == filter).toList();
+
+                            if (filteredSubs.isEmpty) {
+                              return const Center(child: Text("No subscriptions found"));
+                            }
+
+                            return ListView.builder(
+                              itemCount: filteredSubs.length,
+                              itemBuilder: (context, index) {
+                                final sub = filteredSubs[index];
+                                final status = sub['status'];
+                                final start =
+                                (sub['startDate'] as Timestamp).toDate().toString().split(' ')[0];
+                                final end =
+                                (sub['endDate'] as Timestamp).toDate().toString().split(' ')[0];
+
+                                return Card(
+                                  margin: const EdgeInsets.all(10),
+                                  child: ListTile(
+                                    title: Text(
+                                      "Subscription: ${sub['title']}",
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Status: $status"),
+                                        Text("Start: $start"),
+                                        Text("End: $end"),
+                                        if(status=='Approved')
+                                          Text("Subscription is in progress",style: TextStyle(color: Colors.green),),
+                                          ElevatedButton(
+                                            onPressed: () =>
+                                                clientController.showCancelDialog(sub['id'],"subscriptions"),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              spacing: 6,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: const [
+                                                Text(
+                                                  "Cancel Service",
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                                Icon(Icons.cancel, color: Colors.red),
+                                              ],
                                             ),
                                           ),
-                                          Icon(Icons.edit, color: Colors.blue),
-                                        ],
-                                      ),
+                                        if(status=='Expired')
+                                          Text("Service is Expired",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
+                                      ],
                                     ),
-                                  if(status=='pending')
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          clientController.showCancelDialog(service['id']),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        spacing: 6,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: const [
-                                          Text(
-                                            "Cancel Service",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                          Icon(Icons.cancel, color: Colors.red),
-                                        ],
-                                      ),
-                                    ),
-                                  if(status=='claimed'|| status=='started' )
-                                    Text("Service is in progress",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
-                                  if(status=='completed')
-                                    Text("Service is Completed",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
-
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                }
+                                  ),
+                                );
+                              },
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+
+            // Expanded(
+            //   child:  requests.isEmpty
+            //       ? const Center(child: Text("No requests available"))
+            //       : StreamBuilder<QuerySnapshot>(
+            //     stream:FirebaseFirestore.instance.collection('requests').snapshots(),
+            //     builder: (context, asyncSnapshot) {
+            //       return ListView.builder(
+            //         itemCount:requests.length,
+            //         itemBuilder: (context, index) {
+            //           final service =clientController.requests[index];
+            //           final status = service['status'];
+            //           final date = (service['scheduledDate'] as Timestamp).toDate();
+            //           return Card(
+            //             margin: const EdgeInsets.all(10),
+            //             child: ListTile(
+            //               title: Text(
+            //                 "Service: ${service['title']}",
+            //                 style: TextStyle(fontWeight: FontWeight.bold),
+            //               ),
+            //               subtitle: Column(
+            //                 spacing: 4,
+            //                 crossAxisAlignment: CrossAxisAlignment.start,
+            //                 children: [
+            //                   Text(
+            //                     "Status: $status",
+            //                     style: TextStyle(fontWeight: FontWeight.w600),
+            //                   ),
+            //                   Text(
+            //                     "Date: ${date.toString().split(' ')[0]}",
+            //                     style: TextStyle(fontWeight: FontWeight.w600),
+            //                   ),
+            //                   if(status=='Approved')
+            //                     Text("Service is in progress",style: TextStyle(color: Colors.green),),
+            //                   Row(
+            //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //                     children: [
+            //
+            //                       if(status=='pending')
+            //                         ElevatedButton(
+            //                           onPressed: () async {
+            //                             final newDate = await showDatePicker(
+            //                               context: context,
+            //                               initialDate: date,
+            //                               firstDate: DateTime.now(),
+            //                               lastDate: DateTime.now().add(
+            //                                 const Duration(days: 30),
+            //                               ),
+            //                             );
+            //                             if (newDate != null) {
+            //                               clientController.updateServiceDate(
+            //                                 service['id'],
+            //                                 newDate,
+            //                               );
+            //                             }
+            //                           },
+            //                           style: ElevatedButton.styleFrom(
+            //                             backgroundColor: Colors.white,
+            //
+            //                             shape: RoundedRectangleBorder(
+            //                               borderRadius: BorderRadius.circular(12),
+            //                             ),
+            //                           ),
+            //                           child: Row(
+            //                             spacing: 4,
+            //                             children: [
+            //                               Text(
+            //                                 "Edit Date",
+            //                                 style: TextStyle(
+            //                                   fontWeight: FontWeight.w600,
+            //                                 ),
+            //                               ),
+            //                               Icon(Icons.edit, color: Colors.blue),
+            //                             ],
+            //                           ),
+            //                         ),
+            //                       if(status=='pending')
+            //                         ElevatedButton(
+            //                           onPressed: () =>
+            //                               clientController.showCancelDialog(service['id'],"requests"),
+            //                           style: ElevatedButton.styleFrom(
+            //                             backgroundColor: Colors.white,
+            //                             shape: RoundedRectangleBorder(
+            //                               borderRadius: BorderRadius.circular(12),
+            //                             ),
+            //                           ),
+            //                           child: Row(
+            //                             spacing: 6,
+            //                             mainAxisSize: MainAxisSize.min,
+            //                             children: const [
+            //                               Text(
+            //                                 "Cancel Service",
+            //                                 style: TextStyle(
+            //                                   fontWeight: FontWeight.w600,
+            //                                   color: Colors.red,
+            //                                 ),
+            //                               ),
+            //                               Icon(Icons.cancel, color: Colors.red),
+            //                             ],
+            //                           ),
+            //                         ),
+            //                       if(status=='claimed'|| status=='started' )
+            //                         Text("Service is in progress",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
+            //                       if(status=='completed')
+            //                         Text("Service is Completed",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
+            //
+            //                     ],
+            //                   ),
+            //                 ],
+            //               ),
+            //             ),
+            //           );
+            //         },
+            //       );
+            //     }
+            //   ),
+            // ),
           ],
         );
       }),

@@ -7,10 +7,12 @@ import 'package:get/get.dart';
 class OrderController extends GetxController {
   final timeController = TextEditingController();
   final dateController = TextEditingController();
+  final secondDateController = TextEditingController();
   final mobileNumber = TextEditingController();
   RxBool isLoading=false.obs;
 
   DateTime? scheduledDate;
+  DateTime? secondDate;
   final RxString imageUrl = ''.obs;
   final Rx<File?> selectedImage = Rx<File?>(null);
   final picker = ImagePicker();
@@ -18,6 +20,11 @@ class OrderController extends GetxController {
   void setDate(DateTime date) {
     scheduledDate = date;
   }
+
+  void setSecondDate(DateTime date) {
+    secondDate = date;
+  }
+
 
   /// pick image from gallery or camera
   Future<void> pickImage() async {

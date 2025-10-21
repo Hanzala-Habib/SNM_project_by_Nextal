@@ -9,12 +9,20 @@ import 'package:get/get.dart';
 import 'order_confirm_controller.dart';
 
 
-class OrderScreen extends StatelessWidget {
+class OrderScreen extends StatefulWidget {
+  var subscription;
   final Map<String, dynamic> serviceData;
-  final controller = Get.put(OrderController());
-  final subscribeController = Get.put(SubscriptionController());
 
-  OrderScreen({super.key, required this.serviceData});
+ OrderScreen({super.key, required this.serviceData,this.subscription=false});
+
+  @override
+  State<OrderScreen> createState() => _OrderScreenState();
+}
+
+class _OrderScreenState extends State<OrderScreen> {
+  final controller = Get.put(OrderController());
+
+  final subscribeController = Get.put(SubscriptionController());
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +30,7 @@ class OrderScreen extends StatelessWidget {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         title: Text(
-          "Order ${serviceData['title']}",
+          "Order ${widget.serviceData['title']}",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Color(0xFF0E2A4D),
@@ -45,8 +53,15 @@ class OrderScreen extends StatelessWidget {
                   controller.setDate(val!);
                 },
               ),
-        
-        
+              CustomDateField(
+                label: "Select Second Date",
+                controller: controller.secondDateController,
+                onChanged: (val) {
+                  controller.setSecondDate(val!);
+                },
+              ),
+
+
               Obx(() => Column(
                 children: [
                   // Image upload UI
@@ -62,15 +77,15 @@ class OrderScreen extends StatelessWidget {
                     width: 300,
                     color: Colors.grey[300],
                     alignment: Alignment.center,
-                    child: Text("No Image Selected"),
+                    child: Text("No receipt Selected"),
                   ),
                   SizedBox(height: 8),
                   ElevatedButton.icon(
                     onPressed: controller.pickImage,
                     icon: Icon(Icons.upload),
-                    label: Text("Upload Image"),
+                    label: Text("Upload Receipt"),
                   ),
-        
+
                   // 👇 Spinner above button when loading
                   if (controller.isLoading.value) ...[
                     SizedBox(height: 20),
@@ -78,32 +93,61 @@ class OrderScreen extends StatelessWidget {
                     SizedBox(height: 10),
                     Text("Processing your request..."),
                   ],
-        
+
                   // Confirm Button
                   SaveButton(
                     buttonText: "Confirm",
                     onPressed: () async {
                       controller.isLoading.value = true;
                       try {
-                        final userId = subscribeController.auth.currentUser!.uid;
-                        final imageUrl = await controller.uploadImage(userId);
-        
-                         subscribeController.createRequest(
-                          userId: userId,
-                          serviceId: serviceData['id'],
-                          scheduledDate: controller.scheduledDate,
-                          mobileNumber: controller.mobileNumber.text.trim(),
-                          paymentReceiptUrl: imageUrl,
-                        );
-        
+                        print(widget.serviceData);
+
+
+                        if(widget.subscription==true){
+                          final userId = subscribeController.auth.currentUser!.uid;
+                          final imageUrl = await controller.uploadImage(userId);
+                          // final packageId =widget.serviceData['id'] as String? ?? '';
+                          final pkgName = widget.serviceData['name'] ?? 'Package';
+
+                          await subscribeController.createSubscription(
+                            userId: userId,
+                            // packageId: packageId,
+                            serviceId:widget.serviceData['id'],
+                            // type: "package",
+                            durationMonths:12,
+                            mobileNumber: controller.mobileNumber.text.trim(),
+                            paymentReceipt: imageUrl!,
+                            scheduledDate:controller.scheduledDate,
+                            secondScheduledDate: controller.secondDate
+                          );
+                          subscribeController.hasActiveSubscription.value = true;
+                          subscribeController.showBottomSheet.value = false;
+                          Get.snackbar("Subscribed", "$pkgName subscribed successfully");
+                        }
+                        else{
+                          final userId = subscribeController.auth.currentUser!.uid;
+                          final imageUrl = await controller.uploadImage(userId);
+
+                          subscribeController.createRequest(
+                            userId: userId,
+                            serviceId: widget.serviceData['id'],
+                            scheduledDate: controller.scheduledDate,
+                            secondScheduledDate: controller.secondDate,
+                            mobileNumber: controller.mobileNumber.text.trim(),
+                            paymentReceiptUrl: imageUrl,
+                          );
+
+                          Get.snackbar(
+                            "Order Confirmed!",
+                            "Technician will contact you one hour before the scheduled time.",
+                          );
+                        }
+
                         Get.offAll(() => FullClientManagementScreen());
-        
-                        Get.snackbar(
-                          "Order Confirmed!",
-                          "Technician will contact you one hour before the scheduled time.",
-                        );
+
+
                       } catch (e) {
-                       print(e.toString());
+                       print("error${e.toString()}");
                       } finally {
                         controller.isLoading.value = false;
                       }
@@ -111,11 +155,13 @@ class OrderScreen extends StatelessWidget {
                   ),
                 ],
               ))
-        
+
             ],
           ),
         ),
       ),
+
+
     );
   }
 }

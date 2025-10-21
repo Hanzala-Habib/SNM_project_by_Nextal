@@ -14,7 +14,7 @@ class AdminServiceManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
+        backgroundColor:Color(0xFF0E2A4D),
         iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Services Management",

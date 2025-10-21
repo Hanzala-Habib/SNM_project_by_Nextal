@@ -1,5 +1,7 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crmproject/screens/AdminScreen/admin_screen_controller.dart';
+import 'package:crmproject/screens/ClientAccountManagement/client_account_controller.dart';
 import 'package:crmproject/screens/EmployeeScreen/employee_service_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
@@ -13,12 +15,12 @@ class EmployeeServicesScreen extends StatelessWidget {
   final name = FirebaseAuth.instance.currentUser?.displayName;
   final employeeServiceController = Get.put(EmployeeServiceController());
   final adminController = Get.put(AdminController());
+  final clientController=Get.put(ClientAccountController());
 
   EmployeeServicesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    print('request${employeeServiceController.requests}');
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -76,88 +78,181 @@ class EmployeeServicesScreen extends StatelessWidget {
         ],
         backgroundColor:Color(0xFF0F3565),
       ),
-      body: Obx(() {
-        if (employeeServiceController.requests.isEmpty) {
-          return Center(child: Text("No services available"));
-        }
-        return ListView.builder(
-          itemCount: employeeServiceController.requests.length,
-          itemBuilder: (context, index) {
-            var request = employeeServiceController.requests[index];
-            return Card(
-              margin: EdgeInsets.all(10),
-              child: ListTile(
-                title: Text(
-                  request["title"] ?? 'no title in requests',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Price: ${request["price"] ?? 'N/A'} "),
-                    Text(" Status: ${request["status"]}"),
-                    if (request["scheduledDate"] != null)
-                      Text(
-                        "Scheduled Date: ${request["scheduledDate"].toDate().toLocal().toString().split(" ")[0]}",
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(Icons.call, size: 22, color: Colors.green),
-                          SizedBox(width: 5),
-                          RichText(
-                            text: TextSpan(
-                              text: request['ClientNumber'],
-                              style: TextStyle(
-                                color: Colors.blue[800],
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () async {
-                                  await FlutterPhoneDirectCaller.callNumber(
-                                    request['ClientNumber'],
-                                  );
-                                  Get.snackbar(
-                                    "Calling to Client",
-                                    "Please wait ",
-                                  );
-                                },
+      body:DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            const TabBar(
+              labelColor: Color(0xFF0E2A4D),
+              unselectedLabelColor: Colors.grey,
+              indicatorColor:  Color(0xFF0E2A4D),
+              tabs: [
+                Tab(text: "Services"),
+                Tab(text: "Subscriptions"),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // -------- SERVICES TAB --------
+                  Obx(() {
+                    if (employeeServiceController.requests.isEmpty) {
+                      return Center(child: Text("No services available"));
+                    }
+                    return ListView.builder(
+                      itemCount: employeeServiceController.requests.length,
+                      itemBuilder: (context, index) {
+                        var request = employeeServiceController.requests[index];
+                        return Card(
+                          margin: EdgeInsets.all(10),
+                          child: ListTile(
+                            title: Text(
+                              request["title"] ?? 'no title in requests',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Price: ${request["price"] ?? 'N/A'} "),
+                                Text(" Status: ${request["status"]}"),
+                                if (request["scheduledDate"] != null)
+                                  Text(
+                                    "Scheduled Date: ${request["scheduledDate"].toDate().toLocal().toString().split(" ")[0]}",
+                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.call, size: 22, color: Colors.green),
+                                      SizedBox(width: 5),
+                                      RichText(
+                                        text: TextSpan(
+                                          text: request['ClientNumber'],
+                                          style: TextStyle(
+                                            color: Colors.blue[800],
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 18,
+                                          ),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () async {
+                                              await FlutterPhoneDirectCaller.callNumber(
+                                                request['ClientNumber'],
+                                              );
+                                              Get.snackbar(
+                                                "Calling to Client",
+                                                "Please wait ",
+                                              );
+                                            },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (request["status"] == "Approved" &&
+                                    (request["assignedEmployees"] != null &&
+                                        (request["assignedEmployees"] as List ).contains(employeeServiceController.userId)))
+                                  ElevatedButton(
+                                    onPressed: () => employeeServiceController
+                                        .startService(request["id"]),
+                                    child: Text("Start",style: TextStyle(color: Colors.green,fontWeight: FontWeight.bold),),
+                                  ),
+                                if (request["status"] == "started" &&
+                                    (request["assignedEmployees"] != null &&
+                                        (request["assignedEmployees"] as List ).contains(employeeServiceController.userId)))
+                                  ElevatedButton(
+                                    onPressed: () => employeeServiceController
+                                        .endService(request["id"]),
+                                    child: Text("End",style: TextStyle(color: Colors.red,fontWeight: FontWeight.bold),),
+                                  ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (request["status"] == "Approved" &&
-                    (request["assignedEmployees"] != null &&
-                        (request["assignedEmployees"] as List ).contains(employeeServiceController.userId)))
-                      ElevatedButton(
-                        onPressed: () => employeeServiceController
-                            .startService(request["id"]),
-                        child: Text("Start",style: TextStyle(color: Colors.green,fontWeight: FontWeight.bold),),
-                      ),
-                    if (request["status"] == "started" &&
-            (request["assignedEmployees"] != null &&
-                        (request["assignedEmployees"] as List ).contains(employeeServiceController.userId)))
-                      ElevatedButton(
-                        onPressed: () => employeeServiceController
-                            .endService(request["id"]),
-                        child: Text("End",style: TextStyle(color: Colors.red,fontWeight: FontWeight.bold),),
-                      ),
-                  ],
-                ),
+                        );
+                      },
+                    );
+                  }),
+
+                  // -------- SUBSCRIPTIONS TAB --------
+                  Obx(() {
+                    final allSubs = clientController.subscriptions;
+
+                    final filteredSubs =allSubs.where((s) => s['status'] == "Approved").toList();
+
+                    if (filteredSubs.isEmpty) {
+                      return const Center(child: Text("No subscriptions found"));
+                    }
+
+                    return ListView.builder(
+                      itemCount: filteredSubs.length,
+                      itemBuilder: (context, index) {
+                        final sub = filteredSubs[index];
+                        final status = sub['status'];
+                        final start =
+                        (sub['startDate'] as Timestamp).toDate().toString().split(' ')[0];
+                        final end =
+                        (sub['endDate'] as Timestamp).toDate().toString().split(' ')[0];
+
+                        return Card(
+                          margin: const EdgeInsets.all(10),
+                          child: ListTile(
+                            title: Text(
+                              "Subscription: ${sub['title']}",
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Status: $status"),
+                                Text("Start: $start"),
+                                Text("End: $end"),
+                                if(status=='Approved')
+                                  Text("Subscription is Approved",style: TextStyle(color: Colors.green),),
+                                ElevatedButton(
+                                  onPressed: () =>
+                                      clientController.showCancelDialog(sub['id'],"subscriptions"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    spacing: 6,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Text(
+                                        "Cancel Service",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      Icon(Icons.cancel, color: Colors.red),
+                                    ],
+                                  ),
+                                ),
+                                if(status=='Expired')
+                                  Text("Service is Expired",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.green),),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }),
+                ],
               ),
-            );
-          },
-        );
-      }),
+            ),
+          ],
+        ),
+      )
+
     );
   }
 }

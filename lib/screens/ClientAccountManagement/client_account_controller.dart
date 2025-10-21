@@ -9,13 +9,17 @@ class ClientAccountController extends GetxController {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
   RxString selectedStatus = "All".obs;
+  var subscriptions = <Map<String, dynamic>>[].obs;
+
   RxList<Map<String, dynamic>>  activeServices = <Map<String, dynamic>>[].obs;
   RxList<Map<String, dynamic>> requests = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
 
   @override
   void onInit() {
+    applyFilter();
     listenToActiveServices();
+    fetchSubscriptions();
     super.onInit();
   }
 
@@ -62,6 +66,48 @@ class ClientAccountController extends GetxController {
       isLoading.value = false;
     });
   }
+  void fetchSubscriptions() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    isLoading.value = true;
+
+    _firestore
+        .collection('subscriptions')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .listen((snapshot) async {
+      List<Map<String, dynamic>> tempSubs = [];
+
+      for (var doc in snapshot.docs) {
+        var data = doc.data();
+        data['id'] = doc.id;
+
+        // fetch service details
+        if (data['serviceId'] != null) {
+          final serviceSnap = await _firestore
+              .collection('services')
+              .doc(data['serviceId'])
+              .get();
+
+          if (serviceSnap.exists) {
+            var serviceData = serviceSnap.data()!;
+            data['title'] = serviceData['title'];
+            data['price'] = serviceData['price'];
+            data['description'] = serviceData['description'];
+          }
+        }
+
+        // exclude expired/cancelled if you want
+        if (data['status'] != 'cancelled') {
+          tempSubs.add(data);
+        }
+      }
+
+      subscriptions.value = tempSubs; // create an RxList in your controller
+      isLoading.value = false;
+    });
+  }
 
 
 
@@ -82,14 +128,14 @@ class ClientAccountController extends GetxController {
   }
 
 
-  void showCancelDialog(String serviceId) {
-    CustomCancelDialog.show(onConfirm: () => cancelService(serviceId));
+  void showCancelDialog(String serviceId,String collections) {
+    CustomCancelDialog.show(onConfirm: () => cancelService(serviceId,collections));
   }
 
-  Future<void> cancelService(String serviceId) async {
+  Future<void> cancelService(String serviceId,String collections) async {
     try {
       await FirebaseFirestore.instance
-          .collection('requests')
+          .collection(collections)
           .doc(serviceId)
           .delete();
 

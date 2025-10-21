@@ -17,7 +17,11 @@ class SubscriptionController extends GetxController {
   String? selectedLocation;
   var scheduledTime;
 
-
+  @override
+  void onClose() {
+    print("MyController closed!");
+    super.onClose();
+  }
   @override
   void onInit() {
     super.onInit();
@@ -31,7 +35,7 @@ class SubscriptionController extends GetxController {
     final subSnap = await _firestore
         .collection("subscriptions")
         .where("userId", isEqualTo: uid)
-        .where("status", isEqualTo: 'active')
+        .where("status", isEqualTo: 'pending')
         .get();
 
     hasActiveSubscription.value = subSnap.docs.isNotEmpty;
@@ -52,9 +56,13 @@ class SubscriptionController extends GetxController {
 
   Future<void> createSubscription({
     required String userId,
-    String? packageId,
-    List<dynamic> serviceId = const [],
-    required String type,
+    required scheduledDate,
+    required secondScheduledDate,
+    required String mobileNumber,
+    required String paymentReceipt,
+    // String? packageId,
+    required String serviceId,
+    // required String type,
     required int durationMonths,
   }) async {
     final startDate = DateTime.now();
@@ -81,14 +89,18 @@ class SubscriptionController extends GetxController {
 
     await _firestore.collection("subscriptions").add({
       "userId": userId,
-      "packageId": packageId,
+      // "packageId": packageId,
       "serviceId": serviceId,
-      "type": type,
+      // "type": type,
       "startDate": startDate,
       "endDate": endDate,
-      "status": "active", // subscription status
+      "scheduledDate":scheduledDate,
+      "secondScheduledDate":secondScheduledDate,
+      "status": "pending", // subscription status
       "monthlyTracking": monthlyTracking,
       "createdAt": DateTime.now(),
+      "mobileNumber":mobileNumber,
+      "paymentReceiptUrl":paymentReceipt
     });
   }
 
@@ -129,11 +141,60 @@ class SubscriptionController extends GetxController {
     }
   }
 
+  Future<void> generateMonthlyRequests() async {
+    final now = DateTime.now();
+    final snapshot = await _firestore
+        .collection('subscriptions')
+        .where('status', isEqualTo: 'active')
+        .get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final monthlyTracking = List<Map<String, dynamic>>.from(data['monthlyTracking']);
+      final userId = data['userId'];
+      final serviceId = data['serviceId'];
+      final mobileNumber = data['mobileNumber'];
+
+      for (var month in monthlyTracking) {
+        final monthStart = (month['startDate'] as Timestamp).toDate();
+        final monthEnd = (month['endDate'] as Timestamp).toDate();
+
+        // Only create a request if we are inside this month and it's still pending
+        if (now.isAfter(monthStart) && now.isBefore(monthEnd) && month['status'] == 'pending') {
+          // Check if this month's request already exists
+          final existing = await _firestore
+              .collection('requests')
+              .where('subscriptionId', isEqualTo: doc.id)
+              .where('month', isEqualTo: month['month'])
+              .get();
+
+          if (existing.docs.isEmpty) {
+            await _firestore.collection('requests').add({
+              'subscriptionId': doc.id,
+              'month': month['month'],
+              'serviceId': serviceId,
+              'userId': userId,
+              'ClientNumber': mobileNumber,
+              'status': 'pending',
+              'scheduledDate': now,
+              'createdAt': now,
+              'isFromSubscription': true,
+            });
+
+            month['status'] = 'created';
+          }
+        }
+      }
+
+      await doc.reference.update({'monthlyTracking': monthlyTracking});
+    }
+  }
 
 
   Future<void> createRequest({
     required String serviceId,
     required String userId,
+    DateTime? secondScheduledDate,
     String? paymentReceiptUrl,
     DateTime? scheduledDate,
     required String mobileNumber,
@@ -147,11 +208,13 @@ class SubscriptionController extends GetxController {
       "ClientNumber":mobileNumber,
       "status": "pending",
       "scheduledDate": scheduledDate ?? DateTime.now(),
+      "secondScheduledDate":secondScheduledDate,
       "startTime": null,
       "endTime": null,
       "scheduledTime":scheduledTime,
       "reason": null,
       "rating": null,
+      "isFromSubscription": false,
       "location": selectedLocation,
       "paymentReceiptUrl": paymentReceiptUrl,
     });
@@ -163,17 +226,17 @@ class SubscriptionController extends GetxController {
       scheduledDate: requestDate.subtract(const Duration(days: 1)),
     );
 
-    // await LocalNotificationService.scheduleNotification(
-    //   id: docRef.id.hashCode + 1,
-    //   title: "Service Reminder",
-    //   body: "Your service starts in 1 hour!",
-    //   scheduledDate: requestDate.subtract(const Duration(hours: 1)),
-    // );
+    await LocalNotificationService.scheduleNotification(
+      id: docRef.id.hashCode + 1,
+      title: "Service Reminder",
+      body: "Your service starts in 1 hour!",
+      scheduledDate: requestDate.subtract(const Duration(hours: 1)),
+    );
   }
 
-  Future<void> acceptRequest(String requestId, String technicianId) async {
+  Future<void> approveRequest(String requestId, String technicianId) async {
     await _firestore.collection("requests").doc(requestId).update({
-      "status": "accepted",
+      "status": "Approved",
       "technicianId": technicianId,
       "startTime": DateTime.now(),
     });

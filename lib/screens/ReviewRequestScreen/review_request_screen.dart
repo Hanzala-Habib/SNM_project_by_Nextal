@@ -9,6 +9,7 @@ class ReviewRequestScreen extends StatelessWidget {
   final String requestId;
   final Map<String, dynamic> requestData;
   final double price;
+  final bool subscription;
   final String title;
   final reviewController=Get.put(ReviewScreenController());
 final employeeScreenController=Get.put(EmployeeServiceController());
@@ -16,7 +17,7 @@ final employeeScreenController=Get.put(EmployeeServiceController());
     super.key,
     required this.requestId,
     required this.requestData,
-    required this.title, required this.price,
+    required this.title, required this.price, this.subscription=false,
   });
 
 
@@ -119,7 +120,7 @@ print(title);
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () => reviewController.assignEmployeesAndApprove(requestId),
+                    onPressed: () => subscription==true ?reviewController.assignEmployeesAndApproveSubscription(requestId):reviewController.assignEmployeesAndApprove(requestId),
                     icon: const Icon(Icons.check_circle, color: Colors.white),
                     label: const Text("Approve",style: TextStyle(color: Colors.white),),
                     style: ElevatedButton.styleFrom(

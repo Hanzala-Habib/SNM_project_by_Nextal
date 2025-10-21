@@ -9,6 +9,7 @@ class ServiceController extends GetxController {
   final titleController = TextEditingController();
   final priceController = TextEditingController();
   final descriptionController = TextEditingController();
+  final annualPriceController = TextEditingController();
 
   final _firestore = FirebaseFirestore.instance;
   final _storage = FirebaseStorage.instance;
@@ -44,6 +45,7 @@ class ServiceController extends GetxController {
       await _firestore.collection("services").add({
         "title": titleController.text.trim(),
         "price": double.tryParse(priceController.text.trim()) ?? 0.0,
+        "annualPrice":double.tryParse(annualPriceController.text.trim())??0.0,
         "description": descriptionController.text.trim(),
         "imageUrl": imageUrl ?? "",
         "createdAt": FieldValue.serverTimestamp(),

@@ -17,4 +17,14 @@ class ReviewScreenController extends GetxController{
     Get.back();
     Get.snackbar("Success", "Employees assigned and request approved");
   }
+  Future<void> assignEmployeesAndApproveSubscription(
+      String requestId) async {
+    await FirebaseFirestore.instance.collection('subscriptions').doc(requestId).update({
+      'assignedEmployees': selectedEmployeeIds,
+      'status': 'Approved',
+    });
+
+    Get.back();
+    Get.snackbar("Success", "Employees assigned and subscription approved");
+  }
 }
